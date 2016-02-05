@@ -12,7 +12,6 @@ app = Flask(__name__)
 app.cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 
-
 @app.route('/')
 def home():
     return render_template("template.html", game="HCOL15")

@@ -24,6 +24,16 @@
 
 <div class="container">
     <div class="header clearfix">
+        <div class="form-group pull-right">
+            <label for="game">Game: </label>
+            <select id="game">
+                <option value="HCOL15">Colchester United</option>
+                <option value="HBUR16">Burton Albion</option>
+                <option value="HCRE15">Crewe Alexandra</option>
+                <option value="HCHE15">Chesterfield</option>
+                <option value="HGIL15">Gillingham</option>
+            </select>
+        </div>
         <h3 class="text-muted">Southend Ticket Stats</h3>
     </div>
 
@@ -48,7 +58,7 @@
             <h4>West Stand</h4>
             <p>Family: <span id="west-family-sold"></span> sold, <span id="west-family-available"></span> available.</p>
             <p>STUVW: <span id="west-stuvw-sold"></span> sold, <span id="west-stuvw-available"></span> available.</p>
-            <p>X: <span id="west-x-sold"></span> sold, <span id="west-x-available"></span> available.</p>
+            {% if game == "HCOL15" %}<p>X: <span id="west-x-sold"></span> sold, <span id="west-x-available"></span> available.</p>{% endif %}
         </div>
     </div>
 
@@ -89,7 +99,7 @@
 <script>
     $(document).ready(function() {
         $.getJSON("/api/{{ game }}", function(data) {
-            $("#alert").removeClass("alert-warning").addClass("alert-success").text("Successfully retrieved data from " + data["time"] + ". Next update available 5 minutes from then.");
+            $("#alert").removeClass("alert-warning").addClass("alert-success").text("Successfully retrieved data from " + data["time"] + ". Next update available 2 minutes from then.");
             $("#total-sold").text(data["total"][0]);
             $("#total-good-available").text(data["total"][1]);
             $("#total-all-available").text(data["total"][3]);
@@ -103,9 +113,14 @@
             $("#west-family-available").text(data["west"]["family"][3]);
             $("#west-stuvw-sold").text(data["west"]["main"][0]);
             $("#west-stuvw-available").text(data["west"]["main"][3]);
-            $("#west-x-sold").text(data["west"]["x"][0]);
-            $("#west-x-available").text(data["west"]["x"][3]);
+            {% if game == "HCOL15" %}$("#west-x-sold").text(data["west"]["x"][0]);
+            $("#west-x-available").text(data["west"]["x"][3]);{% endif %}
         });
+    });
+
+    $("#game").val("{{ game }}");
+    $("#game").on("change", function() {
+        window.location.href = "/" + $(this).val();
     });
 </script>
 </body>

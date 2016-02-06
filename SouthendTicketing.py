@@ -12,13 +12,14 @@ app = Flask(__name__)
 app.cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 
-@app.route('/')
-def home():
-    return render_template("template.html", game="HCOL15")
+@app.route("/")
+@app.route("/<game>")
+def home(game="HCOL15"):
+    return render_template("template.html", game=game)
 
 
 @app.route("/api/<game>")
-@app.cache.cached(timeout=300)
+@app.cache.cached(timeout=120)
 def api(game):
     stands = {
         "east": {
@@ -37,12 +38,14 @@ def api(game):
 
     url = "https://ticketing.southend-united.co.uk/PagesPublic/ProductBrowse/VisualSeatSelection.aspx/GetSeating"
 
-    raw_data = "{data: \"{}\",\"productCode\":\"{}\",\"stadiumCode\":\"RH\",\"campaignCode\":\"\",\"callId\":\"\"}"
-
     output = {"east": {"main": [0, 0, 0, 0]},
                      "south": {"upper": [0, 0, 0, 0], "lower": [0, 0, 0, 0]},
                      "west": {"family": [0, 0, 0, 0], "main": [0, 0, 0, 0], "x": [0, 0, 0, 0]},
                      "total": [0, 0, 0, 0]}
+
+    if game != "HCOL15":
+        del(stands["west"]["x"])
+        del(output["west"]["x"])
 
     for stand in stands:
         for area in stands[stand]:

@@ -14,7 +14,7 @@ app.cache = Cache(app, config={"CACHE_TYPE": "simple"})
 
 @app.route("/")
 @app.route("/<game>")
-def home(game="HCOL15"):
+def home(game="HGIL15"):
     return render_template("template.html", game=game)
 
 

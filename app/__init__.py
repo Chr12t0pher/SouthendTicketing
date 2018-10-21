@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from flask_cache import Cache
+from flask_caching import Cache
 
 app = Flask(__name__)
 app.config.from_object("config")

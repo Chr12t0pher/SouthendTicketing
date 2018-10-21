@@ -1,6 +1,6 @@
 flask
-Flask-Cache
-Flask-SQLAlchemy
+flask-caching
+flask-SQLAlchemy
 requests
 xmltodict
 bs4

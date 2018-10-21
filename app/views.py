@@ -1,4 +1,4 @@
-from flask import render_template, jsonify, redirect, url_for
+from flask import render_template, jsonify, redirect, url_for, abort
 from bs4 import BeautifulSoup
 
 import datetime
@@ -13,7 +13,7 @@ from app.models import Games, Stats
 @app.route("/")
 @app.route("/<game_code>")
 def home(game_code=""):
-    games = Games.query.filter(Games.date >= datetime.date.today()).all()
+    games = Games.query.filter(Games.date >= datetime.date.today()).order_by(Games.date.asc()).all()
     if not game_code:
         try:
             game_code = games[0].code
@@ -28,70 +28,105 @@ def home(game_code=""):
 def api_latest(game_code):
     game = Games.query.filter_by(code=game_code).first_or_404()
 
-    stands = {
-        "east": {
-            "main": ["ES-EA", "ES-EB", "ES-EC", "ES-ED", "ES-EE"]
-        },
-        "south": {
-            "upper": ["SU-SUF", "SU-SUG", "SU-SUHB", "SU-SUHY", "SU-SUI", "SU-SUJ"],
-            "lower": ["SL-SLK", "SL-SLL", "SL-SLMB", "SL-SLMY", "SL-SLN", "SL-SLO"]
-        },
-        "west": {
-            "family": ["WS-WP", "WS-WQ", "WS-WR"],
-            "main": ["WS-WS", "WS-WT", "WS-WU", "WS-WV", "WS-WW"],
-            "x": ["WS-WX"]
-        },
-        "north": {
-            "yz": ["NS-NWW"]
+    if game_code[0] == "H":  # If home game...
+        stands = {
+            "east": {
+                "main": ["ES-EA", "ES-EB", "ES-EC", "ES-ED", "ES-EE"]
+            },
+            "south": {
+                "upper": ["SU-SUF", "SU-SUG", "SU-SUHB", "SU-SUHY", "SU-SUI", "SU-SUJ"],
+                "lower": ["SL-SLK", "SL-SLL", "SL-SLMB", "SL-SLMY", "SL-SLN", "SL-SLO"]
+            },
+            "west": {
+                "family": ["WS-WP", "WS-WQ", "WS-WR"],
+                "main": ["WS-WS", "WS-WT", "WS-WU", "WS-WV", "WS-WW"],
+                "x": ["WS-WX"]
+            },
+            "north": {
+                "yz": ["NS-NWW"]
+            }
         }
-    }
-    output = {
-        "east": {"main": [0, 0]},
-        "south": {"upper": [0, 0], "lower": [0, 0]},
-        "west": {"family": [0, 0], "main": [0, 0], "x": [0, 0]},
-        "north": {"yz": [0, 0]},
-        "total": [0, 0]
-    }
+        output = {
+            "east": {"main": [0, 0]},
+            "south": {"upper": [0, 0], "lower": [0, 0]},
+            "west": {"family": [0, 0], "main": [0, 0], "x": [0, 0]},
+            "north": {"yz": [0, 0]},
+            "total": [0, 0]
+        }
 
-    if not game.east_stand: del stands["east"]; del output["east"]
-    if not game.south_stand: del stands["south"]; del output["south"]
-    if not game.x_block: del stands["west"]["x"]; del output["west"]["x"]
-    if not game.yz_block: del stands["north"]["yz"]; del output["north"]["yz"]
-    if not game.west_stand: del stands["west"]; del output["west"]
+        if not game.east_stand: del stands["east"]; del output["east"]
+        if not game.south_stand: del stands["south"]; del output["south"]
+        if not game.x_block: del stands["west"]["x"]; del output["west"]["x"]
+        if not game.yz_block: del stands["north"]["yz"]; del output["north"]["yz"]
+        if not game.west_stand: del stands["west"]; del output["west"]
 
-    for stand in stands:
-        for area in stands[stand]:
-            for block in stands[stand][area]:
-                data = "{data: \"" + block + "\",\"productCode\":\"" + game.code + "\",\"stadiumCode\":\"RH\",\"campaignCode\":\"\",\"callId\":\"\"}"
-                response = requests.post(
-                    "https://ticketing.southend-united.co.uk/PagesPublic/ProductBrowse/VisualSeatSelection.aspx/GetSeating",
-                    data=data,
-                    headers={'content-type': "application/json; charset=UTF-8"},
-                    verify=False
-                )
-                response.encoding = "unicode-escape"
-                x = xmltodict.parse(json.loads(response.text)["d"])["seats"]["s"]
-                total_sold = sum(1 for d in x if d.get("@a") == "." and "Segregation" not in d.get("@rsDesc"))
-                total_available = sum(1 for d in x if d.get("@a") == "A") + sum(1 for d in x if d.get("@a") == "X")
+        for stand in stands:
+            for area in stands[stand]:
+                for block in stands[stand][area]:
+                    data = "{data: \"" + block + "\",\"productCode\":\"" + game.code + "\",\"stadiumCode\":\"RH\",\"campaignCode\":\"\",\"callId\":\"\"}"
+                    response = requests.post(
+                        "https://ticketing.southend-united.co.uk/PagesPublic/ProductBrowse/VisualSeatSelection.aspx/GetSeating",
+                        data=data,
+                        headers={'content-type': "application/json; charset=UTF-8"},
+                        verify=False
+                    )
+                    response.encoding = "unicode-escape"
+                    x = xmltodict.parse(json.loads(response.text)["d"])["seats"]["s"]
+                    total_sold = sum(1 for d in x if d.get("@a") == "." and "Segregation" not in d.get("@rsDesc"))
+                    total_available = sum(1 for d in x if d.get("@a") == "A") + sum(1 for d in x if d.get("@a") == "X")
 
-                output[stand][area][0] += total_sold  # Total seats
-                output[stand][area][1] += total_available  # Total available
+                    output[stand][area][0] += total_sold  # Total seats
+                    output[stand][area][1] += total_available  # Total available
 
-                output["total"][0] += total_sold
-                output["total"][1] += total_available
+                    output["total"][0] += total_sold
+                    output["total"][1] += total_available
 
-    output["time"] = datetime.datetime.utcnow().strftime("%H:%M:%S")
+        output["time"] = datetime.datetime.utcnow().strftime("%H:%M:%S")
 
-    new = Stats(
-        game_id=Games.query.filter_by(code=game_code).first().id,
-        time=datetime.datetime.utcnow(),
-        total_sold=output["total"][0],
-        total_available=output["total"][1]
-    )
-    db.session.add(new)
-    db.session.commit()
+        new = Stats(
+            game_id=game.id,
+            time=datetime.datetime.utcnow(),
+            total_sold=output["total"][0],
+            total_available=output["total"][1]
+        )
+        db.session.add(new)
+        db.session.commit()
 
-    return jsonify(output)
+        return jsonify(output)
+
+    elif game_code[0] == "A":
+        output = {"total": [0, 0], "away": True}
+
+        response = requests.get(
+            "https://ticketing.southend-united.co.uk/PagesPublic/ProductBrowse/productAway.aspx",
+            headers={'content-type': "application/json; charset=UTF-8"},
+            verify=False
+        )
+        soup = BeautifulSoup(response.text, "html5lib")
+        game_soup = soup.find_all("div", {"class": game_code})[1]
+        inputs = game_soup.find_all("input")
+        value = int(inputs[3]["value"])
+        output["total"][1] = value  # Total available.
+        try:
+            first_stat = Stats.query.filter_by(game_id=game.id).order_by(Stats.id.asc()).first()
+            output["total"][0] = first_stat.total_available - value  # Total sold. (very rough/fragile)
+        except AttributeError:  # Usually if it's the first time running...
+            output["total"][0] = 0  # This is where we get the inaccuracy.
+
+        output["time"] = datetime.datetime.utcnow().strftime("%H:%M:%S")
+
+        new = Stats(
+            game_id=game.id,
+            time=datetime.datetime.utcnow(),
+            total_sold=output["total"][0],
+            total_available=output["total"][1]
+        )
+        db.session.add(new)
+        db.session.commit()
+
+        return jsonify(output)
+
+    return abort(500)
 
 
 @app.route("/api/<game_code>/historic")
@@ -111,15 +146,16 @@ def admin_load():
         link = link.split("'>click")[0]
         request = s.get(link)
 
-    soup = BeautifulSoup(request.text, "html.parser")
-    games = soup.find("div", {"id": "ticketing-products"}).parent
+    soup = BeautifulSoup(request.text, "html5lib")
+    games = soup.find("div", {"id": "ticketing-products"})
 
     for game in games.select("a .panel.ebiz-header.ebiz-product-type-H"):
         code = game["class"][2]
-        team = game.select("li.ebiz-description")[0].text.replace("Southend Vs ", "").replace("Southend United Vs ", "")
-        date = datetime.datetime.strptime(game.select("li.ebiz-date > span.ebiz-data")[0].text, "%A %d %B %Y")
-        new = Games(team=team, code=code, date=date)
-        db.session.add(new)
-        db.session.commit()
+        if len(Games.query.filter_by(code=code).all()) == 0:
+            team = game.select("li.ebiz-description")[0].text.replace("Southend Vs ", "").replace("Southend United Vs ", "")
+            date = datetime.datetime.strptime(game.select("li.ebiz-date > span.ebiz-data")[0].text, "%A %d %B %Y")
+            new = Games(team=team, code=code, date=date)
+            db.session.add(new)
+            db.session.commit()
 
     return redirect(url_for("home"))

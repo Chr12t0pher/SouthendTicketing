@@ -6,8 +6,8 @@ Gets ticket information on upcoming Southend games.
 ```
 $ git clone https://github.com/Chr12t0pher/SouthendTicketing.git
 $ cd SouthendTicketing
-$ pip install flask Flask-Cache requests xmltodict
-$ python SouthendTicketing.py
+$ pip install -r requirements.txt
+$ python wsgi.py
 ```
 
 ## Disclaimer

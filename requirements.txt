@@ -1,0 +1,6 @@
+flask
+Flask-Cache
+Flask-SQLAlchemy
+requests
+xmltodict
+bs4

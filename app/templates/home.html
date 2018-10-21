@@ -40,6 +40,7 @@
         <div class="jumbotron">
             <h1><span id="total-sold"></span> Sold<sup>*</sup></h1>
             <p class="lead"><span id="total-available"></span> seats available.</p>
+            <small id="away-warning" style="display: none">Nb. Away tickets sold accuracy is unknown at this time - it's based on the difference in the number of tickets available when it was first checked, and the number available now. Tickets available is precise though.</small>
         </div>
 
         <div id="alert" class="alert alert-warning">Getting the latest data direct from Southend's servers, this can take up to 1 minute.</div>
@@ -154,30 +155,40 @@
             $("#alert").removeClass("alert-warning").addClass("alert-success").text("Successfully retrieved data from " + data["time"] + ". Next update available 2 minutes from then.");
             $("#total-sold").text(data["total"][0]);
             $("#total-available").text(data["total"][1]);
-            try {
-                $("#east-sold").text(data["east"]["main"][0]);
-                $("#east-available").text(data["east"]["main"][1]);
-            } catch (TypeError) {}
-            try {
-                $("#south-upper-sold").text(data["south"]["upper"][0]);
-                $("#south-upper-available").text(data["south"]["upper"][1]);
-                $("#south-lower-sold").text(data["south"]["lower"][0]);
-                $("#south-lower-available").text(data["south"]["lower"][1]);
-            } catch (TypeError) {}
-            try {
-                $("#west-family-sold").text(data["west"]["family"][0]);
-                $("#west-family-available").text(data["west"]["family"][1]);
-                $("#west-stuvw-sold").text(data["west"]["main"][0]);
-                $("#west-stuvw-available").text(data["west"]["main"][1]);
-            } catch (TypeError) {}
-            try {
-                $("#west-x-sold").text(data["west"]["x"][0]);
-                $("#west-x-available").text(data["west"]["x"][1]);
-            } catch (TypeError) {}
-            try {
-                $("#west-yz-sold").text(data["north"]["yz"][0]);
-                $("#west-yz-available").text(data["north"]["yz"][1]);
-            } catch (TypeError) {}
+            if (data.hasOwnProperty("away")) {
+                $("#away-warning").show();
+            } else {
+                try {
+                    $("#east-sold").text(data["east"]["main"][0]);
+                    $("#east-available").text(data["east"]["main"][1]);
+                } catch (TypeError) {
+                }
+                try {
+                    $("#south-upper-sold").text(data["south"]["upper"][0]);
+                    $("#south-upper-available").text(data["south"]["upper"][1]);
+                    $("#south-lower-sold").text(data["south"]["lower"][0]);
+                    $("#south-lower-available").text(data["south"]["lower"][1]);
+                } catch (TypeError) {
+                }
+                try {
+                    $("#west-family-sold").text(data["west"]["family"][0]);
+                    $("#west-family-available").text(data["west"]["family"][1]);
+                    $("#west-stuvw-sold").text(data["west"]["main"][0]);
+                    $("#west-stuvw-available").text(data["west"]["main"][1]);
+                } catch (TypeError) {
+                }
+                try {
+                    $("#west-x-sold").text(data["west"]["x"][0]);
+                    $("#west-x-available").text(data["west"]["x"][1]);
+                } catch (TypeError) {
+                }
+                try {
+                    $("#west-yz-sold").text(data["north"]["yz"][0]);
+                    $("#west-yz-available").text(data["north"]["yz"][1]);
+                } catch (TypeError) {
+                }
+                $("#away-warning").hide();
+            }
         });
     });
 

@@ -9,6 +9,8 @@ import json
 from app import app, db
 from app.models import Games, Stats
 
+seating_req_json = '{{data: "{}","productCode":"{}","stadiumCode":"RH","campaignCode":"","callId":"","currentExceptionSeat":"","priceBreakId":"0","includeTicketExchangeSeats":"false","selectedMinimumPrice":"0","selectedMaximumPrice":"0","ticketExchangeMin":"undefined","ticketExchangeMax":"undefined","packageId":"","componentId":"","changeAllSeats":""}}'
+
 
 @app.route("/")
 @app.route("/<game_code>")
@@ -63,12 +65,11 @@ def api_latest(game_code):
         for stand in stands:
             for area in stands[stand]:
                 for block in stands[stand][area]:
-                    data = "{data: \"" + block + "\",\"productCode\":\"" + game.code + "\",\"stadiumCode\":\"RH\",\"campaignCode\":\"\",\"callId\":\"\"}"
+                    data = seating_req_json.format(block, game_code)
                     response = requests.post(
                         "https://ticketing.southend-united.co.uk/PagesPublic/ProductBrowse/VisualSeatSelection.aspx/GetSeating",
                         data=data,
-                        headers={'content-type': "application/json; charset=UTF-8"},
-                        verify=False
+                        headers={'content-type': "application/json; charset=UTF-8"}
                     )
                     response.encoding = "unicode-escape"
                     x = xmltodict.parse(json.loads(response.text)["d"])["seats"]["s"]

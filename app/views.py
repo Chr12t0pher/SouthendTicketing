@@ -9,7 +9,7 @@ import json
 from app import app, db
 from app.models import Games, Stats
 
-seating_req_json = '{data: "{}","productCode":"{}","stadiumCode":"RH","campaignCode":"","callId":"","currentExceptionSeat":"","priceBreakId":"0","includeTicketExchangeSeats":"false","selectedMinimumPrice":"0","selectedMaximumPrice":"0","ticketExchangeMin":"undefined","ticketExchangeMax":"undefined","packageId":"","componentId":"","changeAllSeats":""}'
+seating_req_json = '{{data: "{}","productCode":"{}","stadiumCode":"RH","campaignCode":"","callId":"","currentExceptionSeat":"","priceBreakId":"0","includeTicketExchangeSeats":"false","selectedMinimumPrice":"0","selectedMaximumPrice":"0","ticketExchangeMin":"undefined","ticketExchangeMax":"undefined","packageId":"","componentId":"","changeAllSeats":""}}'
 
 
 @app.route("/")
